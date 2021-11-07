@@ -2,22 +2,24 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/miscmo/soil/blog"
+	"github.com/miscmo/soil/music"
 )
 
-func mainPage(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"Blog":   "www.miscmo.org",
-		"wechat": "miscmo_org",
-	})
-}
-
-func musicList(c *gin.Context) {
-	c.JSON(200, gin.H{})
+func MainPage(c *gin.Context) {
+	c.HTML(200, "index.html", "")
 }
 
 func main() {
 	r := gin.Default()
-	r.GET("/", mainPage)
-	r.GET("/music", musicList)
+	r.LoadHTMLGlob("ui/*.html")
+	r.Static("/static", "./ui/static")
+	r.GET("/", MainPage)
+	r.GET("/MusicHome", music.MusicHome)
+	r.GET("/MusicList", music.MusicList)
+	r.POST("/AddMusic", music.AddMusic)
+	r.GET("/PlayMusic/:id", music.PlayMusic)
+	r.GET("/BlogHome", blog.BlogHome)
+	r.GET("/BlogList", blog.BlogList)
 	r.Run(":8080")
 }

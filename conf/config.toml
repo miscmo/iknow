@@ -1,0 +1,9 @@
+[Server]
+
+[Log]
+Path="log/"
+
+[MySQL]
+Dns=""
+Address=""
+TableMusic=""
