@@ -30,7 +30,7 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}  # Secrets中的配置：vps 登录用户名
           port: ${{ secrets.REMOTE_PORT }} # Secrets中的配置：vps 端口
           key: ${{ secrets.SERVER_SSH_KEY }} # Secrets中的配置：vps 上创建的ssh key的私钥内容
-          source: 'app,ui'  # 编译出的二进制文件名
+          source: 'app,ui,conf'  # 编译出的二进制文件名
           target: ${{ secrets.REMOTE_TARGET }} # Secrets中的配置：scp 到 vps 上的的目录
 
       # 通过ssh远程执行命令重启vps上的服务
