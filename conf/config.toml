@@ -1,9 +1,11 @@
-[Server]
-
+#[Server]
 [Log]
 Path="log/"
 
 [MySQL]
-Dns=""
-Address=""
-TableMusic=""
+Dsn="root:PShFzSnZx_!-S6r@tcp({addr})/my_workspace?charset=utf8mb4&parseTime=True"
+Address="sh-cynosdbmysql-grp-b32ziwt8.sql.tencentcdb.com:20426"
+MaxIdleConnCnt=5
+MaxOpenConnCnt=50
+TableMusic="music_info_records"
+TableUserInfo="user_info_records"
