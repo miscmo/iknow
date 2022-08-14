@@ -8,10 +8,5 @@ backend:
 fronted:
 
 
-.PHONY: proto
-proto:
-	protoc --go_out=backend proto/*.proto
-
 .PHONY: clean
 clean:
-	rm -fr backend/proto

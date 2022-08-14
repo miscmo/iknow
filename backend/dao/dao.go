@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 	"fmt"
-	"github.com/miscmo/iknow/proto"
+	"github.com/miscmo/iknow/model"
 	"github.com/miscmo/iknow/resource"
 	"github.com/miscmo/iknow/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -80,42 +80,12 @@ func GetNodeMongoCli() *mongo.Collection {
 	return collection
 }
 
-//type NoteDiff struct {
-//	Version int `json:"version"`
-//	Diff string `json:"diff"`
-//	Desc string `json:"desc"`
-//	CreateTime string `json:"create_time"`
-//	UpdateTime string `json:"update_time"`
-//}
-//
-//type Note struct {
-//	Id int `json:"id"`
-//	Name string `json:"name"`
-//	Desc string `json:"desc"`
-//	CreateTime string `json:"create_time"`
-//	UpdateTime string `json:"update_time"`
-//	Content string `json:"content"`
-//	Type string	`bson:"type"`	// "text", "audio", "markdown", "video", "pdf"
-//	Diff []NoteDiff `json:"diff"`
-//}
-//
-//type Node struct {
-//	Id int `json:"id"`
-//	Name string 	`json:"name"`
-//	Type int	`json:"type"`
-//	Notes []int	`json:"notes"`
-//	SubNodes []int `json:"sub_nodes"`
-//	IsCollapse bool `json:"is_collapse"`
-//	Score      int `json:"score"`
-//	Permission int `json:"permission"`
-//	CreateTime string `json:"create_time"`
-//	UpdateTime string `json:"update_time"`
-//}
 
 // 插入记录
-func InsertNode(node *proto.Node) error {
+func InsertNode(node *model.Node) error {
 	nodeCollection := GetNodeMongoCli()
 
+	node.CreateTime = utils.GetMSTS()
 	iResult, err := nodeCollection.InsertOne(context.TODO(), node)
 	if err != nil {
 		fmt.Print(err)
@@ -128,11 +98,12 @@ func InsertNode(node *proto.Node) error {
 	return nil
 }
 
-func InsertManyNode(nodes []*proto.Node) error {
+func InsertManyNode(nodes []*model.Node) error {
 	nodeCollection := GetNodeMongoCli()
 
 	var documents []interface{}
 	for _, v := range nodes {
+		v.CreateTime = utils.GetMSTS()
 		documents = append(documents, v)
 	}
 
@@ -151,8 +122,77 @@ func InsertManyNode(nodes []*proto.Node) error {
 	return nil
 }
 
+type ModOption func(option bson.M)
+
+func SetNodeName(name string) ModOption {
+	return func(option bson.M) {
+		option["$set"] = bson.M{
+			"name": name,
+		}
+	}
+}
+
+func SetNodeDesc(desc string) ModOption {
+	return func(option bson.M) {
+		option["$set"] = bson.M{
+			"desc": desc,
+		}
+	}
+}
+
+func SetNodeType(t int) ModOption {
+	return func(option bson.M) {
+		option["$set"] = bson.M{
+			"type": t,
+		}
+	}
+}
+
+func SetNodeCollapse(t bool) ModOption {
+	return func(option bson.M) {
+		option["$set"] = bson.M{
+			"collapse": t,
+		}
+	}
+}
+
+func SetNodeScore(score int) ModOption {
+	return func(option bson.M) {
+		option["$set"] = bson.M{
+			"score": score,
+		}
+	}
+}
+
+func SetNodePermission(permission int) ModOption {
+	return func(option bson.M) {
+		option["$set"] = bson.M{
+			"permission":permission,
+		}
+	}
+}
+
+func AddSubNode(nodes []int64) ModOption {
+	return func(option bson.M) {
+		option["$addToSet"] = bson.M{
+			"nodes": bson.M{
+				"$each": nodes,
+			},
+		}
+	}
+}
+
+func DelSubNode(nodes []int64) ModOption {
+	return func(option bson.M) {
+		option["$pullAll"] = bson.M{
+			"nodes": nodes,
+		}
+
+	}
+}
+
 // 修改记录
-func UpdateNode(id string, update bson.M) error {
+func UpdateNode(id int64, opt ...ModOption) error {
 	var (
 		nodeCollection = GetNodeMongoCli()
 		uResult *mongo.UpdateResult
@@ -160,7 +200,19 @@ func UpdateNode(id string, update bson.M) error {
 	)
 	filter := bson.M{"id": id}
 
-	if uResult, err = nodeCollection.UpdateOne(context.TODO(), filter, update); err != nil {
+	options := make(bson.M, 0)
+
+	for _, f := range opt {
+		f(options)
+	}
+
+	//update := bson.M{
+	//	"$set": options,
+	//}
+
+	fmt.Print("update mongo, filter: %+v, update: %+v", filter, options)
+
+	if uResult, err = nodeCollection.UpdateOne(context.TODO(), filter, options); err != nil {
 		fmt.Print(err)
 		return fmt.Errorf("update node failed, err: %s", err.Error())
 	}
@@ -172,12 +224,12 @@ func UpdateNode(id string, update bson.M) error {
 }
 
 // 查找记录
-func SearchNode(id int64, page, pageSize int32) ([]*proto.Node, error) {
+func SearchNode(id int64, page, pageSize int32) ([]*model.Node, error) {
 	var (
 		nodeCollection = GetNodeMongoCli()
 		err error
 		cursor *mongo.Cursor
-		result []*proto.Node
+		result []*model.Node
 	)
 
 	limit, offset := utils.GetLimitOffset(page, pageSize)

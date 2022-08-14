@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/miscmo/iknow/dao"
-	"github.com/miscmo/iknow/utils"
-	"github.com/miscmo/iknow/proto"
+	"github.com/miscmo/iknow/model"
 	"net/http"
 )
 
@@ -26,8 +25,8 @@ func SearchNodes(c *gin.Context)  {
 	//	return
 	//}
 
-	req := proto.SearchNodesReq{}
-	rsp := proto.SearchNodesRsp{}
+	req := model.SearchNodesReq{}
+	rsp := model.SearchNodesRsp{}
 
 	body := c.Request.Body
 
@@ -35,8 +34,10 @@ func SearchNodes(c *gin.Context)  {
 
 	//var req SearchNodeReq
 	if err := decoder.Decode(&req); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"err": utils.RspInvaildParam.Msg()})
-		fmt.Printf("decode failed, err: %v\n", err.Error())
+		rsp.Code = model.ParamInvild
+		rsp.Msg = err.Error()
+		c.JSON(http.StatusOK, rsp)
+		fmt.Printf("decode failed, err: %v\n", rsp)
 		return
 	}
 
@@ -48,8 +49,10 @@ func SearchNodes(c *gin.Context)  {
 
 	node, err := dao.SearchNode(req.Id, req.Page, req.PageSize)
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"err": "not find the node"})
-		fmt.Printf("getnode failed, err: %v\n", err.Error())
+		rsp.Code = model.UpdateDBFailed
+		rsp.Msg = err.Error()
+		c.JSON(http.StatusOK, rsp)
+		fmt.Printf("getnode failed, err: %v\n", rsp)
 		return
 	}
 
@@ -57,5 +60,5 @@ func SearchNodes(c *gin.Context)  {
 
 	fmt.Printf("get node info: %+v",node)
 
-	c.JSON(http.StatusOK, gin.H{"nodeInfo": node})
+	c.JSON(http.StatusOK, rsp)
 }

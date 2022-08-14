@@ -37,8 +37,10 @@ func main() {
 	{
 		v1.GET("/", api.HomePage)
 		v1.GET("/health", api.Health)
-		v1.POST("/getNode", api.SearchNodes)
+		v1.POST("/searchNodes", api.SearchNodes)
+		v1.POST("/addNodes", api.AddNodes)
 		v1.POST("/calc", api.Calc)
+		v1.POST("/updateNode", api.UpdateNode)
 	}
 
 	r.Run(":8090")
